@@ -13,6 +13,8 @@ import lombok.NonNull;
 
 @AllArgsConstructor
 class NextBiConsumer<T> implements BiConsumer<Void, Throwable> {
+    private static final String FUNCTION_NULL_RESULT_MESSAGE =
+            "Function result is null. Should be CompletionStage";
     @NonNull
     final Iterator<T> iterator;
     @NonNull
@@ -42,11 +44,10 @@ class NextBiConsumer<T> implements BiConsumer<Void, Throwable> {
             completionStage = function.apply(next);
 
             if (completionStage == null) {
-                completionStage = failedFuture(new NullPointerException());
+                completionStage = failedFuture(new NullPointerException(FUNCTION_NULL_RESULT_MESSAGE));
             }
         } catch (Exception | Error e) {
-            final CompletableFuture<Void> future = failedFuture(e);
-            completionStage = future;
+            completionStage = failedFuture(e);
         }
 
         completionStage
