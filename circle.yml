@@ -1,3 +1,6 @@
 machine:
   java:
     version: oraclejdk8
+test:
+  post:
+    - bash <(curl -s https://codecov.io/bash)
