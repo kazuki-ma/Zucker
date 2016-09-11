@@ -16,14 +16,17 @@ import la.serendipity.util.AsPrecondition;
 import lombok.NonNull;
 
 public class ParallelStreamConsumer<T>
-        implements BiFunction<Stream<T>, Function<T, ? extends CompletionStage<Void>>,
-        CompletableFuture<Void>> {
+        implements
+        BiFunction<
+                Stream<T>,
+                Function<T, ? extends CompletionStage<Void>>,
+                CompletableFuture<Void>> {
     private static final Void VOID = null;
-    final AtomicInteger successCount = new AtomicInteger();
-    final AtomicInteger failedCount = new AtomicInteger();
+    private final AtomicInteger successCount = new AtomicInteger();
+    private final AtomicInteger failedCount = new AtomicInteger();
 
-    final int parallelCount;
-    final Executor executor;
+    private final int parallelCount;
+    private final Executor executor;
 
     public ParallelStreamConsumer(
             final int parallelCount,
