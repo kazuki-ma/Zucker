@@ -8,10 +8,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
 class NextBiConsumer<T> implements BiConsumer<Void, Throwable> {
     private static final String FUNCTION_NULL_RESULT_MESSAGE =
             "Function result is null. Should be CompletionStage";
