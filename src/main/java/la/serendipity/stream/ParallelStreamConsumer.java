@@ -1,7 +1,6 @@
 package la.serendipity.stream;
 
 import static java.util.concurrent.CompletableFuture.allOf;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
@@ -54,7 +53,7 @@ public class ParallelStreamConsumer<T>
             final NextBiConsumer<T> biConsumer =
                     new NextBiConsumer<>(iterator, function, futureRoot, executor, successCount, failedCount);
 
-            completedFuture(VOID).whenCompleteAsync(biConsumer, executor);
+            executor.execute(() -> biConsumer.accept(VOID, null));
 
             futures[i] = futureRoot;
         }
