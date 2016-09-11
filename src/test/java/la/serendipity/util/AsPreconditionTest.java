@@ -2,7 +2,10 @@ package la.serendipity.util;
 
 import org.junit.Test;
 
-public class AsPreconditionTest {
+import la.serendipity.UtilityClassTest;
+
+public class AsPreconditionTest extends UtilityClassTest {
+
     static final Object MESSAGE_NOT_TO_BE = new Object() {
         @Override
         public String toString() {

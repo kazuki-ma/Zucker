@@ -1,5 +1,8 @@
 package la.serendipity.util;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class AsPrecondition {
     public static class PreconditionException extends IllegalArgumentException {
         public PreconditionException(String s) {
