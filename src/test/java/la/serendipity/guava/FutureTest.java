@@ -24,7 +24,7 @@ public class FutureTest {
         assertThat(integerFuture.getNow(0)).isEqualTo(1);
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void fromGuavaResultValueByJavaTest() throws Exception {
         final SettableFuture<Integer> guavaFuture = SettableFuture.create();
         Future<Integer> integerFuture = Future.fromGuava(guavaFuture);
@@ -33,7 +33,7 @@ public class FutureTest {
         integerFuture.complete(1);
 
         // Verify
-        assertThat(guavaFuture.get(0, TimeUnit.SECONDS)).isEqualTo(1);
+        assertThat(guavaFuture.get(1, TimeUnit.SECONDS)).isEqualTo(1);
     }
 
     @Test

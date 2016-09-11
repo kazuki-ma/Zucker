@@ -2,6 +2,7 @@ package la.serendipity.closeable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
@@ -12,6 +13,8 @@ public class SilentCloseTest {
         final AtomicInteger i = new AtomicInteger();
 
         try (SilentClose t = i::incrementAndGet) {
+            assertThat(i.get())
+                    .isEqualTo(0);
         }
 
         assertThat(i.get())
@@ -21,7 +24,7 @@ public class SilentCloseTest {
     @Test(expected = RuntimeException.class)
     public void closeExceptionallyTest() throws Exception {
         try (SilentClose t = () -> {
-            throw new RuntimeException();
+            throw new IOException("IOException");
         }) {
         }
     }

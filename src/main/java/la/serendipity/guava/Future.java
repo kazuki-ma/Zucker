@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
+import la.serendipity.guava.Callbacks.CompletableFuturePropagator;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
@@ -21,15 +24,26 @@ public class Future<T> extends CompletableFuture<T> implements ListenableFuture<
     private final List<Runnable> cancelListener = new ArrayList<>();
 
     private interface excludes {
-        public boolean cancel(boolean mayInterruptIfRunning);
+        boolean cancel(boolean mayInterruptIfRunning);
     }
 
-    public static <T> Future<T> fromGuava(@NonNull final ListenableFuture<T> listenableFuture) {
+    public static <T> Future<T> fromGuava(@NonNull final SettableFuture<T> settableFuture) {
+        return fromGuava(settableFuture, Callbacks.settableFuturePropagation(settableFuture));
+    }
+
+    public static <T> Future<T> fromGuava(
+            @NonNull final ListenableFuture<T> listenableFuture,
+            @NonNull final BiConsumer<T, Throwable> onComplete) {
         final CompletableFuture<T> completableFuture = new CompletableFuture<>();
 
-        Futures.addCallback(listenableFuture, Callback.<T>fromJava(completableFuture));
+        // When ListenableFuture complete, notify to CompletableFuture
+        Futures.addCallback(listenableFuture, CompletableFuturePropagator.<T>fromJava(completableFuture));
 
-        return Future.fromJava(completableFuture);
+        // When CompletableFuture complete, notify to ListenableFuture
+        final Future<T> future = Future.fromJava(completableFuture);
+        future.whenComplete(onComplete);
+
+        return future;
     }
 
     @Override
@@ -41,6 +55,7 @@ public class Future<T> extends CompletableFuture<T> implements ListenableFuture<
                 cancelListener.add(listener);
             }
         }
+
         delegate.thenRunAsync(listener, executor);
     }
 
@@ -54,4 +69,5 @@ public class Future<T> extends CompletableFuture<T> implements ListenableFuture<
         cancelListenerCopy.forEach(Runnable::run);
         return delegate.cancel(mayInterruptIfRunning);
     }
+
 }

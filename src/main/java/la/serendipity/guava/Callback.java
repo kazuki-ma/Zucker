@@ -1,24 +1,16 @@
 package la.serendipity.guava;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 import com.google.common.util.concurrent.FutureCallback;
 
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-
-@AllArgsConstructor(staticName = "fromJava")
-public class Callback<T> implements FutureCallback<T> {
-    @NonNull
-    private final CompletableFuture<T> completableFuture;
-
+public interface Callback<T> extends BiConsumer<T, Throwable>, FutureCallback<T> {
     @Override
-    public void onSuccess(T result) {
-        completableFuture.complete(result);
-    }
-
-    @Override
-    public void onFailure(Throwable t) {
-        completableFuture.completeExceptionally(t);
+    default void accept(T result, Throwable throwable) {
+        if (throwable == null) {
+            onSuccess(result);
+        } else {
+            onFailure(throwable);
+        }
     }
 }
