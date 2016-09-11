@@ -41,4 +41,9 @@ public class CallbacksSettableDelegationTest {
         assertThat(future.isDone());
         assertThat(future.get());
     }
+
+    @Test(expected = NullPointerException.class)
+    public void nullConstructorTest() {
+        Callbacks.settableFuturePropagation(null);
+    }
 }
