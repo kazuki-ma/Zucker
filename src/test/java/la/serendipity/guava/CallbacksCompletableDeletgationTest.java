@@ -40,4 +40,9 @@ public class CallbacksCompletableDeletgationTest {
         assertThat(future.isCompletedExceptionally()).isTrue();
         assertThat(future.get());
     }
+
+    @Test(expected = NullPointerException.class)
+    public void nullConstructorTest() {
+        Callbacks.completableFuturePropagation(null);
+    }
 }
