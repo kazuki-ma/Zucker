@@ -2,11 +2,13 @@ package la.serendipity.guava;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 
 public class FutureTest {
@@ -51,5 +53,22 @@ public class FutureTest {
         // Verify
         assertThat(future.isDone()).isTrue();
         assertThat(result.get()).isEqualTo(1);
+    }
+
+    @Test
+    public void testListenerIsCalledForAlreadyCanceledFuture() {
+        Future<Void> future = Future.fromJava(new CompletableFuture<>());
+        future.cancel(false);
+        final AtomicInteger result = new AtomicInteger(0);
+
+        // Do
+        future.addListener(() -> {
+            assertThat(future.isDone()).isTrue();
+            assertThat(future.isCancelled()).isTrue();
+            result.incrementAndGet();
+        }, MoreExecutors.directExecutor());
+
+        // Verify
+        assertThat(result.get()).isEqualTo((int) 1);
     }
 }

@@ -13,10 +13,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import la.serendipity.util.AsPrecondition;
-import lombok.Builder;
 import lombok.NonNull;
 
-@Builder
 public class ParallelStreamConsumer<T>
         implements BiFunction<Stream<T>, Function<T, ? extends CompletionStage<Void>>,
         CompletableFuture<Void>> {
