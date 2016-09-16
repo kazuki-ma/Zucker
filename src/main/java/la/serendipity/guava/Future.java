@@ -70,4 +70,9 @@ public class Future<T> extends CompletableFuture<T> implements ListenableFuture<
         return delegate.cancel(mayInterruptIfRunning);
     }
 
+    public static CompletableFuture<Void> failedFuture(@NonNull final Throwable throwable) {
+        final CompletableFuture<Void> future = new CompletableFuture<>();
+        future.completeExceptionally(throwable);
+        return future;
+    }
 }

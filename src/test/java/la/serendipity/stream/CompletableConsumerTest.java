@@ -3,11 +3,16 @@ package la.serendipity.stream;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static la.serendipity.closeable.AutoCloseables.closeable;
-import static la.serendipity.stream.NextBiConsumer.failedFuture;
+import static la.serendipity.guava.Future.failedFuture;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -40,7 +45,7 @@ public class CompletableConsumerTest {
         AtomicInteger ai = new AtomicInteger();
 
         // Do
-        target.apply(stream.iterator(), i -> {
+        target.apply(stream, i -> {
             ai.addAndGet(i);
             return completedFuture(null);
         }).get();
@@ -118,6 +123,29 @@ public class CompletableConsumerTest {
 
         assertThat(target.getFailedCount())
                 .isEqualTo(1);
+    }
+
+    @Test
+    public void tooManyStreamTest() throws Exception {
+        stream = IntStream.rangeClosed(1, 10_000).boxed();
+        ParallelStreamConsumer<Integer> target = new ParallelStreamConsumer<>(1024,
+                                                                              Executors.newFixedThreadPool(16));
+
+        final AtomicLong atomicLong = new AtomicLong();
+        final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(8);
+
+        target.apply(stream, (Integer i) -> {
+            CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+            scheduledThreadPoolExecutor.schedule(() -> {
+                atomicLong.addAndGet((long) i);
+                completableFuture.complete(null);
+            }, 100, TimeUnit.MILLISECONDS);
+            return completableFuture;
+        }).get();
+
+        // Verify
+        assertThat(atomicLong.get())
+                .isEqualTo(10_000L * (1L + 10_000L) / 2L);
     }
 
 }

@@ -1,7 +1,7 @@
 package la.serendipity.closeable;
 
 @FunctionalInterface
-interface SilentClose extends AutoCloseable {
+public interface SilentClose extends AutoCloseable {
     @Override
     default void close() {
         try {

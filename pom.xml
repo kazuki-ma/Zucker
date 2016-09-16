@@ -38,6 +38,19 @@
         <version>2.19.1</version>
       </plugin>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>cobertura-maven-plugin</artifactId>
+        <configuration>
+          <instrumentation>
+            <ignoreMethodAnnotations>
+              <ignoreMethodAnnotation>lombok.AllArgsConstructor</ignoreMethodAnnotation>
+              <ignoreMethodAnnotation>lombok.NonNull</ignoreMethodAnnotation>
+            </ignoreMethodAnnotations>
+          </instrumentation>
+          <check />
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.7.7.201606060606</version>

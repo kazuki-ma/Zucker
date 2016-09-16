@@ -1,18 +1,18 @@
 package la.serendipity.stream;
 
-import static java.util.concurrent.CompletableFuture.allOf;
-
-import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import la.serendipity.closeable.SilentClose;
 import la.serendipity.util.AsPrecondition;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 
 public class ParallelStreamConsumer<T>
         implements
@@ -40,24 +40,52 @@ public class ParallelStreamConsumer<T>
     public CompletableFuture<Void> apply(
             @NonNull final Stream<T> stream,
             @NonNull final Function<T, ? extends CompletionStage<Void>> function) {
-        return apply(stream.iterator(), function);
+
+        final Semaphore available = new Semaphore(parallelCount);
+        final CompletableFuture<Void> futureRoot = new CompletableFuture<>();
+
+        try (SilentClose silent = stream::close) {
+            stream.onClose(() -> {
+                uncheckedAcquire(available, parallelCount);
+                futureRoot.complete(null);
+            }).forEach(value -> {
+                uncheckedAcquire(available, 1);
+
+                executor.execute(() -> {
+                    CompletionStage<?> completionStage;
+
+                    try {
+                        completionStage = function.apply(value);
+
+                        if (completionStage == null) {
+                            throw new NullPointerException();
+                        }
+                    } catch (Exception | Error e) {
+                        CompletableFuture<?> future = new CompletableFuture<>();
+                        future.completeExceptionally(e);
+                        completionStage = future;
+                    }
+
+                    completionStage
+                            .whenComplete((v, e) -> {
+                                if (e == null) {
+                                    successCount.incrementAndGet();
+                                } else {
+                                    failedCount.incrementAndGet();
+                                }
+
+                                available.release();
+                            });
+                });
+            });
+
+            return futureRoot;
+        }
     }
 
-    public CompletableFuture<Void> apply(
-            @NonNull final Iterator<T> iterator,
-            @NonNull final Function<T, ? extends CompletionStage<Void>> function) {
-
-        final CompletableFuture[] futures = new CompletableFuture[parallelCount];
-        for (int i = 0; i < parallelCount; ++i) {
-            final CompletableFuture<Void> futureRoot = new CompletableFuture<>();
-            final NextBiConsumer<T> biConsumer =
-                    new NextBiConsumer<>(iterator, function, futureRoot, executor, successCount, failedCount);
-
-            executor.execute(() -> biConsumer.accept(VOID, null));
-
-            futures[i] = futureRoot;
-        }
-        return allOf(futures);
+    @SneakyThrows
+    static void uncheckedAcquire(Semaphore semaphore, int permit) {
+        semaphore.acquire(permit);
     }
 
     public int getSuccessCount() {
