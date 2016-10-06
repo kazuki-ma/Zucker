@@ -84,7 +84,7 @@ public class ParallelStreamConsumer<T>
     }
 
     @SneakyThrows
-    static void uncheckedAcquire(Semaphore semaphore, int permit) {
+    static void uncheckedAcquire(final Semaphore semaphore, final int permit) {
         semaphore.acquire(permit);
     }
 
